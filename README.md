@@ -3,3 +3,4 @@
 
 An emulator for a synth. 
 
+TODO: EVERYTHING

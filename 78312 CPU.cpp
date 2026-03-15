@@ -7,7 +7,7 @@
 const float clockSpeedCPU = 0;
 
 //using string = std::string;
-
+char ExternalROM [65536];
 
 class CPU
 {
@@ -19,28 +19,50 @@ class CPU
     class Byte{
     public:
 
-        //
+        //BITMODE will toggle the Byte bit-format, which will help parsing binary streams hopefully(TODO:maybe some sort of binary decoder), normally in pairs of 2 bytes(?)
+        //REGWIDTH will eventually control current register width
+        //if REGWIDTH == 8 {bit0...bit7} elif REGWIDTH == 16{bit0...bit15}
+        int BITMODE = 0;
+        int REGWIDTH = 0;
+
+        //Bytes in Little Endian format
+
         //first set of bits (high order byte(?) in 16 bit mode)
-                        // if mode = PSW then bit configuration is:
-        bool bit0;      // =0 = H7
-        bool bit1;      // =RBS2 = H6
-        bool bit2;      // =RBS1 = H5
-        bool bit3;      // =RBS0 = H4
-        bool bit4;      // =0 = H3
-        bool bit5;      // =0 = H2
-        bool bit6;       //=IE = H1
-        bool bit7;      // =0 = H0
+                        // if mode == PSW (then REGWIDTH = 16) and then bit configuration is
+        bool bit0;      // H7=0
+        bool bit1;      // H6=RBS2
+        bool bit2;      // H5=RBS1
+        bool bit3;      // H4=RBS0
+        bool bit4;      // H3=0
+        bool bit5;      // H2=0
+        bool bit6;       //H1=IE
+        bool bit7;      // H0=0
 
         //second set of bits (low order byte(?) in 16 bit mode)
-                        //if mode = PSW then bit configuration is:
-        bool bit8;      //=S = L7
-        bool bit9;      //=Z = L6
-        bool bit10;     //=RSS = L5
-        bool bit11;     //=AC = L4
-        bool bit12;     //=UF = L3
-        bool bit13;     //=PV = L2
-        bool bit14;     //=SUB = L1
-        bool bit15;     //=CY = L0
+                        //if (mode == PSW)(then REGWIDTH = 16) and then bit configuration is:
+        bool bit8;      //L7=S = L7
+        bool bit9;      //L6=Z = L6
+        bool bit10;     //L5=RSS = L5
+        bool bit11;     //L4=AC = L4
+        bool bit12;     //L3=UF = L3
+        bool bit13;     //L2=PV = L2
+        bool bit14;     //L1=SUB = L1
+        bool bit15;     //L0=CY = L0
+
+        //elseif (mode == CCW)
+        //{then REGWIDTH = 8
+        //if Reset(), all CCW bits = 0
+        //L7=0
+        //L6=0
+        //L5=0
+        //L4=0
+        //L3=0
+        //L2=0
+        //L1=TPF    Table Position Flag - TPF = 0 if RESET();
+        //L0=EOS    //End-of-Software interrupt Flag(EOS) if EOS == 1 {ISPR.resetting = disabled/0}
+                    //if (INSTRUCTION == RETI or RETCS) {EOS = 0}
+
+
     };
 
 
@@ -90,7 +112,6 @@ class CPU
                 bool L6 = Z;	//Zero Flag(PSW.L6)
                 bool L7 = S;		//Sign Flag(PSW.L7)
                 };
-    };
             class High{
                 //PSW High Byte (or bits)
                 public:
@@ -115,7 +136,18 @@ class CPU
     short SP;		//Stack Pointer 				(16-bit Register)//
                     //Becomes undef if Reset();
 
-    char CCW;	//CPU Control Word 		(8-bit)//
+                    //CPU Control Word 		(8-bit)//;
+    class CCW{
+    public:
+        bool B0 = EOS;
+        bool B1 = TPF;
+        bool B2 = 0;
+        bool B3 = 0;
+        bool B4 = 0;
+        bool B5 = 0;
+        bool B6 = 0;
+        bool B7 = 0;
+    };
 
 
     char A, X, B, C , D, E, H, L; //General Purpose Registers(8-bit)
@@ -155,18 +187,24 @@ class CPU
 
         }
         };
+};
 
 
-
-int result=0;
+short result=0;
 int main()  //Main loop, not finished yet, I guess I could hash this into a watchdog timer or something wild
 {
 
      CPU CPUObject;
-     result = ALU(1, '-', 1).ALUresult;
+     result = CPU::ALU(222, '+', 222).ALUresult;
      if (result == 0){
         //somehow set PSW.Z (Zero flag) to 1;
         printf("RESULT IS ZERO");
+        printf("USE ME FOR ZERO FLAG STATE");
+     }
+     else if (result << 0)
+     {
+         printf("RESULT IS NEGATIVE")
+         printf("USE ME FOR  FLAG STATE");
      }
 
 
@@ -206,15 +244,5 @@ void RESET() {  				//Reset chip function - eventually will behave as the hardwa
 //TODO: instruction cycles and literally everything else
  cpuCycle(){
     float Frequency = clockSpeedCPU; //Define it later..
-
-};
-//Fetch portion of instructions
-void Fetch() {
-};
-//Decode portion of instructions
-void Decode() {
-};
-//Execution stage of instructions
-void Execute() {
 
 };

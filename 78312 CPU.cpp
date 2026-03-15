@@ -18,7 +18,7 @@ class CPU
 //    using Word = unsigned short;
     class Byte{
     public:
-
+        //first set of bits (low order byte in 16 bit mode)
         bool bit0;
         bool bit1;
         bool bit2;
@@ -28,7 +28,7 @@ class CPU
         bool bit6;
         bool bit7;
 
-        //second set of bits
+        //second set of bits (high order byte in 16 bit mode)
         bool bit8;
         bool bit9;
         bool bit10;
@@ -44,21 +44,50 @@ class CPU
     short PC;		//Program Counter 		(16-bit Register)//
     class PSW{
     public:
-        //PSW Low Bytes
+        //PSW Low Byte
             class Low{
                 public:
-                bool CY = 0;		//Carry(PSW.L0)
-                bool SUB = 0;	//Subtraction(PSW.L1)   set to 1 if ALU is doing a subtraction operation, else 0
-                bool PV = 0;		//Parity/Overflow(PSW.L2)
-                bool UF = 0;	//User Flag(PSW.L3)
-                bool AC = 0;		//Auxillary Carry(PSW.L4)
-                bool RSS = 0;	//Register Set Selection Flag(PSW.L5)
-                bool Z = 0;	//Zero Flag(PSW.L6)
-                bool S = 0;		//Sign Flag(PSW.L7)
+                //Program Status Word - Low Byte (or bits)
+                bool CY;		//Carry flag (CY)         set to 1 if a carry/borrow occurs from/into bit 7 or bit 15, else 0;
+
+                bool SUB;	    //Subtraction flag (SUB)   set to 1 if ALU is doing a subtraction operation, else 0
+
+                bool PV;		//Parity/Overflow flag (P/V) - Overflow mode: set to 1 if overflow or underflow occurs as twos complement during arithmetic instruction execution else 0
+
+                                                    // - Parity mode: when number of bits is even, set to 1, if odd, 0; (only works on lower 8 bits)
+                bool UF;	    //User Flag
+
+                bool AC;		//Auxillary Carry flag (AC) set to 1 if a carry/borrow occurs from/into bit 3, else 0;
+
+                bool RSS;
+                                //Register Set Selection Flag - Specifies the general registers which function as X, A, C, and B.
+                                //The correspondence between function registers and absolute registers (R0-R15) or (RP0-RP7) depends on bitstate of RSS (or sometimes not)
+
+                                //if 8-bit mode {R0-R15} else if 16-bit mode {RP0 - RP7}
+
+                                //if RSS=0{ R0, R1, R2, R3 = X, A, B, C}
+                                //else if RSS=1 {R4, R5, R6, R7 = X, A, B, C}
+                                //regardless of RSS{ R8, R9, R10, R11 = VPlow, VPhigh, UPlow, UPhigh}
+                                //regardless of RSS {R12, R13, R14, R15 = E, D, L, H}
+                                //if RSS=0{RP0, RP1 = AX, BC}else if RSS=1{RP2, RP3 = AX, BC}
+                                //regardless of RSS{RP4, RP5, RP6, RP7 = VP, UP, DE, HL}
+
+                bool Z;	        //Zero Flag - when operation result is 0, set zero flag to 1. Else if not 0, set zero flag to = 0;
+                bool S;
+
+
+                bool L0 = CY;		//Carry(PSW.L0)
+                bool L1 = SUB;	//Subtraction(PSW.L1)
+                bool L2 = PV;		//Parity/Overflow(PSW.L2)
+                bool L3 = UF;	//User Flag(PSW.L3)
+                bool L4 = AC;		//Auxillary Carry(PSW.L4)
+                bool L5 = RSS;	//Register Set Selection Flag(PSW.L5)
+                bool L6 = Z;	//Zero Flag(PSW.L6)
+                bool L7 = S;		//Sign Flag(PSW.L7)
                 };
     };
             class High{
-                //PSW High Bytes
+                //PSW High Byte (or bits)
                 public:
                 bool IE = 0;    //Interrupt Request Enable Flag (PSW.H1)// EI will set this to 1, DI will set it to 0
                 bool RBS0 = 0;
@@ -98,21 +127,17 @@ class CPU
         int ALUoperand2;        //The second variable handed to the ALU
         int ALUresult;          //The result of the ALUs calculation
 
-        ALU(int VAR1, char OPERATION, int VAR2, int RESULT){       //ALU constructor with parameters
-
-
-            ALUoperand1 = VAR1;
-            ALUoperation = OPERATION;
-            ALUoperand2 = VAR2;
-            ALUresult = RESULT;
-            if (ALUoperation == '+'){
+        ALU(int VAR1, char OPERATION, int VAR2){       //ALU constructor with parameters
+            if (OPERATION == '+'){
                 //do addition thingy and store result somewhere
-               RESULT, ALUresult = VAR1 + VAR2;
+               int RESULT = VAR1 + VAR2;
+               ALUresult = RESULT;
                printf("semi coded addition feature");
             }
-            else if (ALUoperation == '-'){
+            else if (OPERATION == '-'){
                 //do subtraction thingy and store result somewhere
-                    RESULT, ALUresult = VAR1 - VAR2;
+                    int RESULT = VAR1 - VAR2;
+                    ALUresult = RESULT;
                     printf("semi coded subtraction feature");
 
             }
@@ -127,17 +152,16 @@ class CPU
 
 
 
-
-
-int main()  //Main loop, not finished yet
+int res=0;
+int main()  //Main loop, not finished yet, I guess I could hash this into a watchdog timer or something wild
 {
-    char give;
-    CPU CPUObject;
 
-        //ALU (ALUoperation,ALUoperator1,ALUoperator2,ALUresult)
-    {
+     CPU CPUObject;
+     res = ALU(2, '-', 1).ALUresult;
 
-    };
+
+
+
     bool running = true;
     while (running)
     {
@@ -146,8 +170,12 @@ int main()  //Main loop, not finished yet
             char key = getch();
             switch(key)
             {
-                default: std::cout << key; break;
-                ALU(1, '+', 1, NULL);
+
+
+                default: std::cout << res; break;
+
+
+
             };
         }
         Sleep(10);
@@ -155,14 +183,15 @@ int main()  //Main loop, not finished yet
     return 0;
 }
 
-    // union {
-        // struct {A, X} = AX;
-    // }
 
 //TODO: Vector addresses
 
-void Reset() {  				//Reset chip function - eventually will behave as the hardware RESET pin
+void RESET() {  				//Reset chip function - eventually will behave as the hardware RESET pin
                                 //SP = undef
+                                //
+                                //if RESET() {
+                                //(CPU.PSW.Low.bits = 0) and (CPU.PSW.High.bits = 0) }
+
 };
 //TODO: instruction cycles and literally everything else
  cpuCycle(){
